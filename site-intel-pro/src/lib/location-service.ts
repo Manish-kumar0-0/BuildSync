@@ -23,17 +23,22 @@ export const locationService: LocationService = {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       return { latitude: null, longitude: null, gpsAccuracy: null };
     }
-    return new Promise(resolve => {
-      navigator.geolocation.getCurrentPosition(
-        position => resolve({
+    const readPosition = (enableHighAccuracy: boolean, timeout: number) =>
+      new Promise<GeolocationPosition | null>(resolve => {
+        navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), {
+          enableHighAccuracy,
+          timeout,
+          maximumAge: enableHighAccuracy ? 0 : 60_000,
+        });
+      });
+    const position = await readPosition(true, 10_000) ?? await readPosition(false, 10_000);
+    return position
+      ? {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           gpsAccuracy: position.coords.accuracy,
-        }),
-        () => resolve({ latitude: null, longitude: null, gpsAccuracy: null }),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
-      );
-    });
+        }
+      : { latitude: null, longitude: null, gpsAccuracy: null };
   },
   async getGPSAccuracy() {
     return (await this.getCurrentLocation()).gpsAccuracy;

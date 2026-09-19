@@ -692,7 +692,7 @@ function WorkerDashboard({ onScreen, data }: { onScreen: (screen: Screen) => voi
 
 function FieldDashboard({ onScreen, data }: { onScreen: (s: Screen) => void; data: DashboardSnapshot }) {
   const progress = data.overview?.progress?.overall_progress;
-  return <div className="space-y-5"><SitePlanCard progress={dashboardPercent(progress)} zone="Assigned field work" /><Button className="pulse-ring h-20 w-full justify-between px-5 text-left" onClick={() => onScreen("capture")}><span><span className="block text-[10px] uppercase opacity-70">Primary action</span><span className="mt-1 block text-base font-extrabold">Capture site evidence</span></span><span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-foreground/10"><Camera className="h-5 w-5" /></span></Button><div className="grid grid-cols-3 gap-2"><MetricCard label="Assigned" value={String(data.activities.length)} icon={ListChecks} /><MetricCard label="Evidence" value={data.overview?.evidence?.total === undefined ? "—" : String(data.overview.evidence.total)} icon={Upload} tone="success" /><MetricCard label="Pending" value={data.overview?.evidence?.pending === undefined ? "—" : String(data.overview.evidence.pending)} icon={Clock3} tone="warning" /></div><Card><div className="flex items-center justify-between"><div><p className="text-[10px] text-muted-foreground">CURRENT PROGRESS</p><p className="mt-1 text-xl font-extrabold">{dashboardPercent(progress)}</p></div><StatusBadge tone="muted">GPS unavailable</StatusBadge></div><div className="mt-4"><Progress value={Math.max(0, Math.min(100, progress ?? 0))} /></div></Card><section><SectionTitle title="Assigned activities" action="View all" onAction={() => onScreen("activities")} /><Card>{data.activities.length ? data.activities.slice(0, 4).map(item => <ActivityRow key={item.id} title={item.name} meta={item.zone ?? "—"} status={dashboardPercent(item.progress_percentage)} tone="primary" />) : <p className="py-6 text-center text-xs text-muted-foreground">No assigned activities were returned.</p>}</Card></section><Card><SectionTitle title="Notifications" /><DashboardNotifications data={data} /></Card></div>;
+  return <div className="space-y-5"><SitePlanCard progress={dashboardPercent(progress)} zone="Assigned field work" /><Button className="pulse-ring h-20 w-full justify-between px-5 text-left" onClick={() => onScreen("capture")}><span><span className="block text-[10px] uppercase opacity-70">Primary action</span><span className="mt-1 block text-base font-extrabold">Capture site evidence</span></span><span className="grid h-10 w-10 place-items-center rounded-xl bg-primary-foreground/10"><Camera className="h-5 w-5" /></span></Button><div className="grid grid-cols-3 gap-2"><MetricCard label="Assigned" value={String(data.activities.length)} icon={ListChecks} /><MetricCard label="Evidence" value={data.overview?.evidence?.total === undefined ? "—" : String(data.overview.evidence.total)} icon={Upload} tone="success" /><MetricCard label="Pending" value={data.overview?.evidence?.pending === undefined ? "—" : String(data.overview.evidence.pending)} icon={Clock3} tone="warning" /></div><Card><div className="flex items-center justify-between"><div><p className="text-[10px] text-muted-foreground">CURRENT PROGRESS</p><p className="mt-1 text-xl font-extrabold">{dashboardPercent(progress)}</p></div><StatusBadge tone="muted">GPS captured during evidence upload</StatusBadge></div><div className="mt-4"><Progress value={Math.max(0, Math.min(100, progress ?? 0))} /></div></Card><section><SectionTitle title="Assigned activities" action="View all" onAction={() => onScreen("activities")} /><Card>{data.activities.length ? data.activities.slice(0, 4).map(item => <ActivityRow key={item.id} title={item.name} meta={item.zone ?? "—"} status={dashboardPercent(item.progress_percentage)} tone="primary" />) : <p className="py-6 text-center text-xs text-muted-foreground">No assigned activities were returned.</p>}</Card></section><Card><SectionTitle title="Notifications" /><DashboardNotifications data={data} /></Card></div>;
 }
 
 function EvidenceCard() {
@@ -719,7 +719,7 @@ function ProjectDashboard({ onScreen, data }: { onScreen: (s: Screen) => void; d
 }
 
 function MapPanel() {
-  const [location, setLocation] = useState("Location unavailable");
+  const [location, setLocation] = useState("GPS optional");
   useEffect(() => {
     let active = true;
     void locationService.getCurrentLocation().then(currentLocation => {
@@ -736,7 +736,7 @@ function CaptureFlow({ onBack }: { onBack: () => void }) {
   const [mode, setMode] = useState<"photo" | "video">("photo");
   const [progress, setProgress] = useState(0);
   const [notes, setNotes] = useState("");
-  const [location, setLocation] = useState("Location unavailable");
+  const [location, setLocation] = useState("GPS optional");
   const [date, setDate] = useState("");
   const [responsible, setResponsible] = useState("Foreman Joseph");
   const [media, setMedia] = useState<import("@/lib/camera-service").CameraMedia | null>(null);
@@ -783,7 +783,7 @@ function CaptureFlow({ onBack }: { onBack: () => void }) {
       setGpsAccuracy(currentLocation.gpsAccuracy);
       setDate(media.capturedAt);
       setLocation(currentLocation.latitude === null || currentLocation.longitude === null
-        ? "Location unavailable"
+        ? "GPS unavailable · upload can continue"
         : `${currentLocation.latitude.toFixed(5)}, ${currentLocation.longitude.toFixed(5)}`);
     } catch (error) {
       if (error instanceof CameraServiceError && error.code === "PERMISSION_DENIED") setCaptureError("Camera permission is denied. Enable camera access or choose evidence from your gallery.");
@@ -823,7 +823,7 @@ function CaptureFlow({ onBack }: { onBack: () => void }) {
     mediaType: media?.mediaType ?? mode,
     activity: activity?.name ?? "—",
     wbs: "—",
-    location: location === "Location unavailable" ? null : location,
+    location: location.startsWith("GPS unavailable") || location === "GPS optional" ? null : location,
     zone: activity?.zone || "—",
     gpsAccuracy: gpsAccuracy === null ? "Unavailable" : `${gpsAccuracy}m`,
     date: date ? new Date(date).toLocaleDateString() : "—",
