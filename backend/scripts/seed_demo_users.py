@@ -29,13 +29,12 @@ if not DEMO_PASSWORD:
 Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
     for email, (full_name, role) in DEMO_USERS.items():
-        if db.query(User).filter(User.email == email).first() is None:
-            db.add(
-                User(
-                    full_name=full_name,
-                    email=email,
-                    hashed_password=hash_password(DEMO_PASSWORD),
-                    role=role,
-                )
-            )
+        user = db.query(User).filter(User.email == email).first()
+        if user is None:
+            user = User(email=email)
+            db.add(user)
+
+        user.full_name = full_name
+        user.hashed_password = hash_password(DEMO_PASSWORD)
+        user.role = role
     db.commit()

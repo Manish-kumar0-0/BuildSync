@@ -73,7 +73,9 @@ C:/Python314/python.exe scripts/seed_demo_users.py
 ```
 
 The seed script uses the documented development password
-`BuildSyncDemo!2026`; never use it outside local development.
+`DEMO_PASSWORD` from the environment. Set it in Render or in a local
+`.env` file before running the script. Existing demo users are updated with
+the configured password, while missing users are created.
 
 ## Run
 
