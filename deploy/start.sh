@@ -12,7 +12,7 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
-python3 /app/backend/scripts/seed_demo_users.py
+PYTHONPATH=/app/backend python3 /app/backend/scripts/seed_demo_users.py
 envsubst '${PORT} ${BACKEND_PORT} ${FRONTEND_PORT}' \
   < /etc/nginx/templates/default.conf.template \
   > /etc/nginx/conf.d/default.conf
