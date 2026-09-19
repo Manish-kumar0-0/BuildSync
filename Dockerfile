@@ -1,4 +1,4 @@
-abh FROM node:22-bookworm AS frontend-build
+FROM node:22-bookworm AS frontend-build
 
 WORKDIR /app/site-intel-pro
 COPY site-intel-pro/package*.json ./
