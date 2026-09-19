@@ -449,7 +449,7 @@ function LoginFlow({ screen, setScreen, onAuthenticated, loginError }: { screen:
   const isOtp = screen === "otp";
   const isForgot = screen === "forgot";
   const [resetStage, setResetStage] = useState<"otp" | "password">("otp");
-  const [loginIdentifier, setLoginIdentifier] = useState("worker@metroline6.com");
+  const [loginIdentifier, setLoginIdentifier] = useState("worker@buildsync.demo");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -461,7 +461,7 @@ function LoginFlow({ screen, setScreen, onAuthenticated, loginError }: { screen:
   const [loading, setLoading] = useState(false);
   const [resetToken, setResetToken] = useState("");
   const [demoOpen, setDemoOpen] = useState(false);
-  const demoAccounts: [Role, string][] = [["Worker", "worker@metroline6.com"], ["Field Engineer", "field@test.com"], ["Site Engineer", "site@test.com"], ["Planning Engineer", "planning@test.com"], ["Safety Officer", "safety@test.com"], ["QA/QC Engineer", "qaqc@test.com"], ["Material Manager", "materials@test.com"], ["Driver", "driver@test.com"], ["Equipment Manager", "equipment@test.com"], ["Project Manager", "manager@test.com"]];
+  const demoAccounts: [Role, string][] = [["Worker", "worker@buildsync.demo"], ["Field Engineer", "engineer@buildsync.demo"], ["Site Engineer", "site@buildsync.demo"], ["Project Manager", "pm@buildsync.demo"], ["Safety Officer", "safety@buildsync.demo"], ["QA/QC Engineer", "qa@buildsync.demo"], ["Material Manager", "material@buildsync.demo"], ["Driver", "driver@buildsync.demo"], ["Equipment Manager", "equipment@buildsync.demo"], ["Admin", "admin@buildsync.demo"]];
   const submit = async () => {
     if (loading) return;
     if (isForgot) {
