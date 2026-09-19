@@ -1,0 +1,1 @@
+"""BuildSync backend application package."""
