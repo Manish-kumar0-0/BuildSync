@@ -7,7 +7,18 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user, require_role
 from app.core.database import get_db
-from app.models import ActivityStatus, BOQItem, PlannedProgress, Project, ScheduleActivity, User, UserRole, WBS
+from app.models import (
+    ActivityStatus,
+    BOQItem,
+    PlannedProgress,
+    Project,
+    ProjectAssignmentStatus,
+    ProjectUserAssignment,
+    ScheduleActivity,
+    User,
+    UserRole,
+    WBS,
+)
 from app.schemas.planning import (
     BOQCreate, BOQResponse, BOQUpdate, PlanSummary, PlannedProgressCreate,
     PlannedProgressResponse, ProjectCreate, ProjectResponse, ProjectUpdate,
@@ -51,8 +62,25 @@ def create_project(data: ProjectCreate, db: Session = Depends(get_db), user: Use
 
 
 @router.get("/api/projects", response_model=list[ProjectResponse])
-def list_projects(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return list(db.scalars(select(Project).order_by(Project.id.desc())).all())
+def list_projects(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role in {UserRole.ADMIN, UserRole.PROJECT_MANAGER}:
+        query = select(Project)
+    else:
+        query = (
+            select(Project)
+            .join(
+                ProjectUserAssignment,
+                ProjectUserAssignment.project_id == Project.id,
+            )
+            .where(
+                ProjectUserAssignment.user_id == current_user.id,
+                ProjectUserAssignment.status == ProjectAssignmentStatus.ACTIVE,
+            )
+        )
+    return list(db.scalars(query.order_by(Project.id.desc())).unique().all())
 
 
 @router.get("/api/projects/{project_id}", response_model=ProjectResponse)

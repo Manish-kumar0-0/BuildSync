@@ -1,9 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
 from app.core.database import get_db
-from app.models import Project, User, UserRole
+from app.models import (
+    Project,
+    ProjectAssignmentStatus,
+    ProjectUserAssignment,
+    User,
+    UserRole,
+)
 from app.schemas.assistant import AssistantRequest, AssistantResponse
 from app.services.assistant.assistant_service import (
     AssistantConfigurationError,
@@ -33,7 +40,14 @@ def _authorize(
         return
     if user.role in MANAGEMENT_ROLES:
         return
-    if _assigned_activity_ids(db, user.id, project_id):
+    project_assignment = db.scalar(
+        select(ProjectUserAssignment.id).where(
+            ProjectUserAssignment.project_id == project_id,
+            ProjectUserAssignment.user_id == user.id,
+            ProjectUserAssignment.status == ProjectAssignmentStatus.ACTIVE,
+        )
+    )
+    if project_assignment is not None or _assigned_activity_ids(db, user.id, project_id):
         return
     raise HTTPException(status.HTTP_403_FORBIDDEN, "You are not authorized for this project assistant")
 

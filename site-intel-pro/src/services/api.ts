@@ -66,7 +66,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const message = response.status === 401
       ? "Your session has expired. Please sign in again."
       : response.status === 403
-        ? "You are not authorized for this action."
+        ? detail ?? "You are not authorized for this action."
         : response.status === 404
           ? "The requested record was not found."
           : response.status === 422
