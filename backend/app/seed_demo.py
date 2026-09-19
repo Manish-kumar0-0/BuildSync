@@ -4,6 +4,7 @@ This module only touches the project identified by ``ML6-C3`` and users whose
 email ends in ``@buildsync.demo``.
 """
 
+import os
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -82,7 +83,7 @@ from app.models import (
 from app.services.events.event_service import create_event
 from app.services.notifications.notification_service import create_notification
 
-DEMO_PASSWORD = "Hack@7788"
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "")
 PROJECT_CODE = "ML6-C3"
 DEMO_DOMAIN = "@buildsync.demo"
 DEMO_DATE = date(2026, 9, 16)
@@ -140,6 +141,8 @@ def _event(db, project, activity, event_type, when, title, actor, reference, met
 def seed_demo() -> None:
     if engine is None or SessionLocal is None:
         raise RuntimeError("DATABASE_URL must be configured before seeding demo data")
+    if not DEMO_PASSWORD:
+        raise RuntimeError("DEMO_PASSWORD must be configured before seeding demo data")
     ensure_schema()
     with SessionLocal() as db:
         users = {key: _user(db, key, name, role) for key, (name, role) in ROLE_USERS.items()}
@@ -389,7 +392,6 @@ def seed_demo() -> None:
             create_notification(db, recipient_user_id=users["pm"].id, project_id=project.id, activity_id=p3.id, notification_type=notification_type, priority=priority, title=title, message=message, reference_type="demo-seed", reference_id=reference)
         db.commit()
         print(f"Demo project ensured: {PROJECT_CODE} (id={project.id})")
-        print(f"Demo password for all demo users: {DEMO_PASSWORD}")
 
 
 if __name__ == "__main__":
