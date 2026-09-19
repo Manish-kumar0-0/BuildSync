@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_validator, model_validator
+from sqlalchemy.engine import make_url
 
 load_dotenv()
 
@@ -65,7 +66,19 @@ class Settings(BaseModel):
             raise ValueError(
                 "DATABASE_URL must be a PostgreSQL SQLAlchemy URL"
             )
-        return value.strip()
+        normalized = value.strip()
+        if "<" in normalized or ">" in normalized:
+            raise ValueError(
+                "DATABASE_URL still contains a placeholder; replace the "
+                "Supabase host, user, password, and database with real values"
+            )
+        try:
+            parsed = make_url(normalized)
+        except ValueError as exc:
+            raise ValueError("DATABASE_URL is not a valid PostgreSQL URL") from exc
+        if not parsed.host:
+            raise ValueError("DATABASE_URL must include a database host")
+        return normalized
 
     @model_validator(mode="after")
     def validate_jwt_secret(self) -> "Settings":
