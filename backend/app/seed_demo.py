@@ -83,7 +83,7 @@ from app.models import (
 from app.services.events.event_service import create_event
 from app.services.notifications.notification_service import create_notification
 
-DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
+DEMO_PASSWORD = "BuildSync@123"
 PROJECT_CODE = "ML6-C3"
 DEMO_DOMAIN = "@buildsync.demo"
 DEMO_DATE = date(2026, 9, 16)
