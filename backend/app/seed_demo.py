@@ -82,7 +82,7 @@ from app.models import (
 from app.services.events.event_service import create_event
 from app.services.notifications.notification_service import create_notification
 
-DEMO_PASSWORD = "Hack@7788"
+DEMO_PASSWORD = "BuildSync@123"
 PROJECT_CODE = "ML6-C3"
 DEMO_DOMAIN = "@buildsync.demo"
 DEMO_DATE = date(2026, 9, 16)
@@ -104,7 +104,7 @@ ROLE_USERS = {
 
 def _user(db, key: str, name: str, role: UserRole) -> User:
     email = f"{key}{DEMO_DOMAIN}"
-    user = db.scalar(select(User).where(User.email == email))
+    user = db.query(User).filter(User.email == email).first()
     if user is None:
         user = User(
             full_name=name,
@@ -114,6 +114,8 @@ def _user(db, key: str, name: str, role: UserRole) -> User:
         )
         db.add(user)
         db.flush()
+    else:
+        user.hashed_password = hash_password(DEMO_PASSWORD)
     return user
 
 

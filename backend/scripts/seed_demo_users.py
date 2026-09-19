@@ -5,7 +5,7 @@ from app.core.security import hash_password
 from app.models import User, UserRole
 
 
-DEMO_PASSWORD = os.getenv("Hack@7788")
+DEMO_PASSWORD = "Hack@7788"
 DEMO_USERS = {
     "worker@buildsync.demo": ("Demo Worker", UserRole.WORKER),
     "foreman@buildsync.demo": ("Demo Foreman", UserRole.FOREMAN),
