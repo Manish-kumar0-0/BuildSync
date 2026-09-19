@@ -1619,7 +1619,14 @@ function ChatbotAssistant({ role, open, onClose }: { role: Role; open: boolean; 
       ? window.sessionStorage.getItem("constructiq-project") ?? window.localStorage.getItem("constructiq-project")
       : null;
     if (!projectId) {
-      setError("No project is available for the current user.");
+      const fallback = getMockAnswer(prompt);
+      setMessages(current => [...current, {
+        from: "assistant",
+        text: fallback.text,
+        sections: fallback.sections,
+        context: fallback.context,
+      }]);
+      setError("Live project data is unavailable, so I showed the built-in assistant guidance.");
       setLoading(false);
       return;
     }
@@ -1636,7 +1643,16 @@ function ChatbotAssistant({ role, open, onClose }: { role: Role; open: boolean; 
         ],
       }]);
     } catch (error) {
-      setError(error instanceof ApiError ? error.message : "The project assistant is unavailable.");
+      const fallback = getMockAnswer(prompt);
+      setMessages(current => [...current, {
+        from: "assistant",
+        text: fallback.text,
+        sections: fallback.sections,
+        context: fallback.context,
+      }]);
+      setError(error instanceof ApiError
+        ? `${error.message} Showing built-in assistant guidance instead.`
+        : "The project assistant is unavailable. Showing built-in assistant guidance instead.");
     } finally {
       setLoading(false);
     }
