@@ -1,11 +1,9 @@
-import os
-
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import hash_password
 from app.models import User, UserRole
 
 
-DEMO_PASSWORD = os.getenv("DEMO_PASSWORD") or "BuildSync@123"
+DEMO_PASSWORD = "BuildSync@123"
 DEMO_USERS = {
     "worker@buildsync.demo": ("Demo Worker", UserRole.WORKER),
     "foreman@buildsync.demo": ("Demo Foreman", UserRole.FOREMAN),
