@@ -16,10 +16,10 @@ class Settings(BaseModel):
     jwt_algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=60)
     evidence_max_file_size_bytes: int = Field(default=10 * 1024 * 1024, gt=0)
-    ai_provider: str = Field(default="mock")
+    ai_provider: str = Field(default="gemini")
     gemini_api_key: str | None = Field(default=None)
-    gemini_model: str = Field(default="gemini-3.6-flash")
-    gemini_vision_model: str | None = Field(default=None)
+    gemini_model: str = Field(default="gemini-2.5-flash")
+    gemini_vision_model: str | None = Field(default="gemini-2.5-flash")
     yolo_model_path: str | None = Field(default=None)
     yolo_classes: list[str] = Field(default_factory=list)
     weather_provider: str | None = Field(default=None)
@@ -55,6 +55,8 @@ class Settings(BaseModel):
     def validate_jwt_secret(self) -> "Settings":
         if self.environment != "development" and len(self.jwt_secret_key.encode()) < 32:
             raise ValueError("JWT_SECRET_KEY must be at least 32 bytes outside development")
+        if self.environment != "development" and self.ai_provider == "mock":
+            raise ValueError("AI_PROVIDER=mock is only allowed in development")
         return self
 
     @classmethod
@@ -73,10 +75,12 @@ class Settings(BaseModel):
             evidence_max_file_size_bytes=int(
                 os.getenv("EVIDENCE_MAX_FILE_SIZE_BYTES", str(10 * 1024 * 1024))
             ),
-            ai_provider=os.getenv("AI_PROVIDER", "mock").lower(),
+            ai_provider=os.getenv("AI_PROVIDER", "gemini").lower(),
             gemini_api_key=os.getenv("GEMINI_API_KEY") or None,
-            gemini_model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
-            gemini_vision_model=os.getenv("GEMINI_VISION_MODEL") or None,
+            gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+            gemini_vision_model=os.getenv(
+                "GEMINI_VISION_MODEL", "gemini-2.5-flash"
+            ),
             yolo_model_path=os.getenv("YOLO_MODEL_PATH") or None,
             yolo_classes=[
                 item.strip()

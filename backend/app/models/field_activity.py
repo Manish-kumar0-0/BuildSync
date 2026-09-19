@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
+    from app.models.evidence import Evidence
     from app.models.risk_prediction import ActivityRiskPrediction
     from app.models.activity_measured_progress import ActivityMeasuredProgress
 

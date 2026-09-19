@@ -74,9 +74,13 @@ Seed development-only users for each supported role:
 C:/Python314/python.exe scripts/seed_demo_users.py
 ```
 
-The default demo password is `BuildSync@123`. Override it with a `DEMO_PASSWORD`
-value in Render or a local `.env` file before running the script. Existing demo
+Set a development/staging-only `DEMO_PASSWORD` value in Render or a local `.env`
+file before running the script. Existing demo
 users are updated with the configured password, while missing users are created.
+
+For Gemini, use a valid model available to the Gemini API, such as
+`gemini-2.5-flash`, for both `GEMINI_MODEL` and `GEMINI_VISION_MODEL`. The API key
+must be supplied through `GEMINI_API_KEY`; never commit it.
 
 ## Run
 

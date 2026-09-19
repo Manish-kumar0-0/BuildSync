@@ -33,9 +33,7 @@ def _authorize(
         return
     if user.role in MANAGEMENT_ROLES:
         return
-    if user.role == UserRole.SITE_ENGINEER and _assigned_activity_ids(
-        db, user.id, project_id
-    ):
+    if _assigned_activity_ids(db, user.id, project_id):
         return
     raise HTTPException(status.HTTP_403_FORBIDDEN, "You are not authorized for this project assistant")
 

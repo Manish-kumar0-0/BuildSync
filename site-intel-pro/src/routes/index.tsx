@@ -1597,17 +1597,6 @@ function ChatbotAssistant({ role, open, onClose }: { role: Role; open: boolean; 
     }
   }, [info.first, info.subtitle, messages.length, open]);
 
-  const getMockAnswer = (prompt: string) => {
-    const lower = prompt.toLowerCase();
-    if (lower.includes("pier p3") || lower.includes("delayed")) return { text: "Pier P3 is currently 14% behind planned progress. The main contributing factors are worker shortage, delayed steel delivery, and weather interruption.", sections: [{ label: "Reasons", content: "Six workers were absent, steel arrived 9 hours late, and rain paused external work for 4.5 hours yesterday." }, { label: "Supporting evidence", content: "Planned progress is 78% versus 64% reported. The latest site timeline records the late steel delivery and rain interruption." }, { label: "Recommended action", content: "Reallocate 4 workers or extend working hours; the recommended plan is expected to recover the variance in about 1 day." }], context: { activity: "Pier P3 Reinforcement", evidence: "Steel delivery note DN-104 · 3 site photos", event: "Material delivery delayed · 11:30" } };
-    if (lower.includes("risk")) return { text: "Three activities are currently at risk: Pier P3 reinforcement, Deck D2 shuttering, and the utility diversion.", sections: [{ label: "Reasons", content: "Pier P3 has a workforce and material shortfall; Deck D2 is waiting on inspection clearance; the utility diversion is blocked by an unresolved issue." }, { label: "Supporting evidence", content: "Pier P3 is HIGH risk with a predicted 2-day delay. Deck D2 is due at 16:30 and the utility diversion is marked Blocked." }, { label: "Recommended action", content: "Prioritize Pier P3 recovery, clear the Deck D2 hold point, and assign an owner to the utility issue today." }], context: { activity: "Pier P3 Reinforcement", evidence: "Progress update · 64% reported", event: "Delay risk identified · Today" } };
-    if (lower.includes("worker")) return { text: "There are currently 36 workers available, against 42 required for the planned production rate.", sections: [{ label: "Workforce information", content: "The six-person gap is concentrated around the Pier P3 reinforcement crew." }, { label: "Recovery recommendation", content: "Mobilize 6 workers for the next shift, or reallocate 4 workers from a lower-priority activity." }], context: { activity: "Pier P3 Reinforcement", evidence: "Crew availability report · 36 available", event: "Workforce shortage flagged · 09:10" } };
-    if (lower.includes("material")) return { text: "Ready-mix M40 is running low at 18% remaining.", sections: [{ label: "Reasons", content: "Current pours at Zone B are consuming stock faster than the next scheduled delivery." }, { label: "Supporting evidence", content: "Inventory shows 42 m³ remaining in Batch RM-42, with a Low stock status." }, { label: "Recommended action", content: "Expedite the next ready-mix delivery and confirm the pour sequence with the Site Engineer." }] };
-    if (lower.includes("yesterday") || lower.includes("happened")) return { text: "Yesterday, the team started foundation work at Pier P3, received 24 tons of steel, uploaded field evidence, and paused external works during rain.", sections: [{ label: "Reasons", content: "The rain interruption and an equipment issue affected the afternoon work window." }, { label: "Supporting evidence", content: "The timeline records steel delivery at 11:30, evidence upload at 13:15, a crane issue at 14:30, and rain at 16:00." }, { label: "Recommended action", content: "Review the crane inspection and carry forward the weather-affected work into the next available shift." }] };
-    if (lower.includes("critical") || lower.includes("issue")) return { text: "Today's critical issues are the Pier P3 delay risk, the Crane TC-02 equipment issue, and low Ready-mix M40 stock.", sections: [{ label: "Reasons", content: "These issues can directly affect today's pour sequence and the recovery schedule." }, { label: "Supporting evidence", content: "Pier P3 is HIGH risk, Crane TC-02 is flagged in Zone B, and Ready-mix M40 is at 18% stock." }, { label: "Recommended action", content: "Confirm the recovery crew, close the crane issue, and expedite ready-mix delivery before the next pour." }] };
-    return { text: "The current schedule variance can be recovered with a focused crew and one additional shift.", sections: [{ label: "Reasons", content: "The largest variance is concentrated at Pier P3, where workforce, steel delivery, and weather have reduced production." }, { label: "Supporting evidence", content: "Pier P3 is 8% behind plan and the mock recovery model predicts a 2-day delay." }, { label: "Recommended action", content: "Use the recommended +6 worker plan first; add one shift if material or weather constraints remain." }] };
-  };
-
   const ask = async (text: string) => {
     const prompt = text.trim();
     if (!prompt) return;
@@ -1619,14 +1608,7 @@ function ChatbotAssistant({ role, open, onClose }: { role: Role; open: boolean; 
       ? window.sessionStorage.getItem("constructiq-project") ?? window.localStorage.getItem("constructiq-project")
       : null;
     if (!projectId) {
-      const fallback = getMockAnswer(prompt);
-      setMessages(current => [...current, {
-        from: "assistant",
-        text: fallback.text,
-        sections: fallback.sections,
-        context: fallback.context,
-      }]);
-      setError("Live project data is unavailable, so I showed the built-in assistant guidance.");
+      setError("Live project data is unavailable. Select a project and try again.");
       setLoading(false);
       return;
     }
@@ -1643,16 +1625,9 @@ function ChatbotAssistant({ role, open, onClose }: { role: Role; open: boolean; 
         ],
       }]);
     } catch (error) {
-      const fallback = getMockAnswer(prompt);
-      setMessages(current => [...current, {
-        from: "assistant",
-        text: fallback.text,
-        sections: fallback.sections,
-        context: fallback.context,
-      }]);
       setError(error instanceof ApiError
-        ? `${error.message} Showing built-in assistant guidance instead.`
-        : "The project assistant is unavailable. Showing built-in assistant guidance instead.");
+        ? error.message
+        : "The project assistant is unavailable. Please try again later.");
     } finally {
       setLoading(false);
     }

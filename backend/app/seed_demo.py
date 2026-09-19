@@ -4,6 +4,7 @@ This module only touches the project identified by ``ML6-C3`` and users whose
 email ends in ``@buildsync.demo``.
 """
 
+import os
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
@@ -82,7 +83,7 @@ from app.models import (
 from app.services.events.event_service import create_event
 from app.services.notifications.notification_service import create_notification
 
-DEMO_PASSWORD = "BuildSync@123"
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
 PROJECT_CODE = "ML6-C3"
 DEMO_DOMAIN = "@buildsync.demo"
 DEMO_DATE = date(2026, 9, 16)
@@ -138,6 +139,8 @@ def _event(db, project, activity, event_type, when, title, actor, reference, met
 
 
 def seed_demo() -> None:
+    if not DEMO_PASSWORD:
+        raise RuntimeError("DEMO_PASSWORD must be configured before seeding demo data")
     if engine is None or SessionLocal is None:
         raise RuntimeError("DATABASE_URL must be configured before seeding demo data")
     ensure_schema()

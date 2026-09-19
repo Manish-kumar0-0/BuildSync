@@ -7,6 +7,10 @@ from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Numeric, Strin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.evidence import Evidence
+    from app.models.field_activity import Activity
 from app.models.user import User
 
 if TYPE_CHECKING:

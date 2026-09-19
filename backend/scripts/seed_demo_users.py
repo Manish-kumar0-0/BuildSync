@@ -1,9 +1,11 @@
+import os
+
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import hash_password
 from app.models import User, UserRole
 
 
-DEMO_PASSWORD = "BuildSync@123"
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
 DEMO_USERS = {
     "worker@buildsync.demo": ("Demo Worker", UserRole.WORKER),
     "foreman@buildsync.demo": ("Demo Foreman", UserRole.FOREMAN),
@@ -19,6 +21,8 @@ DEMO_USERS = {
 }
 
 
+if not DEMO_PASSWORD:
+    raise RuntimeError("DEMO_PASSWORD must be configured when SEED_DEMO_USERS=true")
 if engine is None or SessionLocal is None:
     raise RuntimeError("DATABASE_URL must be set before seeding demo users")
 
