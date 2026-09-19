@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: buildsync
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /docs
+    autoDeploy: true
