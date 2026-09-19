@@ -129,7 +129,7 @@ def _activity_for_upload(db: Session, activity_id: int, user: User) -> Activity:
     if not any(
         assignment.user_id == user.id and assignment.status == AssignmentStatus.ACTIVE
         for assignment in activity.assignments
-    ):
+    ) and activity.responsible_user_id != user.id:
         raise HTTPException(403, "You must be assigned to this activity")
     return activity
 
