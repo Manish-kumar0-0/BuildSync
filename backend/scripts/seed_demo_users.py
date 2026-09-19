@@ -7,15 +7,7 @@ from app.models import User, UserRole
 
 DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
 DEMO_USERS = {
-    "worker@buildsync.demo": ("Demo Worker", UserRole.WORKER),
-    "foreman@buildsync.demo": ("Demo Foreman", UserRole.FOREMAN),
     "engineer@buildsync.demo": ("Demo Field Engineer", UserRole.FIELD_ENGINEER),
-    "site@buildsync.demo": ("Demo Site Engineer", UserRole.SITE_ENGINEER),
-    "safety@buildsync.demo": ("Demo Safety Officer", UserRole.SAFETY_OFFICER),
-    "qa@buildsync.demo": ("Demo QA/QC Engineer", UserRole.QA_QC_ENGINEER),
-    "material@buildsync.demo": ("Demo Material Manager", UserRole.MATERIAL_MANAGER),
-    "driver@buildsync.demo": ("Demo Driver", UserRole.DRIVER),
-    "equipment@buildsync.demo": ("Demo Equipment Manager", UserRole.EQUIPMENT_MANAGER),
     "pm@buildsync.demo": ("Demo Project Manager", UserRole.PROJECT_MANAGER),
     "admin@buildsync.demo": ("Demo Admin", UserRole.ADMIN),
 }

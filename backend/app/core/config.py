@@ -2,7 +2,7 @@ import os
 from decimal import Decimal
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 load_dotenv()
 
@@ -50,6 +50,22 @@ class Settings(BaseModel):
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
     password_reset_expire_minutes: int = 10
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if any(char in value for char in "\r\n"):
+            raise ValueError(
+                "DATABASE_URL must contain only one PostgreSQL URL; "
+                "remove pasted environment-variable lines"
+            )
+        if not value.startswith(("postgresql://", "postgresql+psycopg://")):
+            raise ValueError(
+                "DATABASE_URL must be a PostgreSQL SQLAlchemy URL"
+            )
+        return value.strip()
 
     @model_validator(mode="after")
     def validate_jwt_secret(self) -> "Settings":

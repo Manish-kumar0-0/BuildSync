@@ -83,7 +83,7 @@ from app.models import (
 from app.services.events.event_service import create_event
 from app.services.notifications.notification_service import create_notification
 
-DEMO_PASSWORD = "BuildSync@123"
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD")
 PROJECT_CODE = "ML6-C3"
 DEMO_DOMAIN = "@buildsync.demo"
 DEMO_DATE = date(2026, 9, 16)
@@ -92,14 +92,6 @@ ROLE_USERS = {
     "admin": ("Demo Admin", UserRole.ADMIN),
     "pm": ("Demo Project Manager", UserRole.PROJECT_MANAGER),
     "engineer": ("Demo Field Engineer", UserRole.FIELD_ENGINEER),
-    "site": ("Demo Site Engineer", UserRole.SITE_ENGINEER),
-    "foreman": ("Demo Foreman", UserRole.FOREMAN),
-    "worker": ("Demo Worker", UserRole.WORKER),
-    "safety": ("Demo Safety Officer", UserRole.SAFETY_OFFICER),
-    "qa": ("Demo QA/QC Engineer", UserRole.QA_QC_ENGINEER),
-    "material": ("Demo Material Manager", UserRole.MATERIAL_MANAGER),
-    "driver": ("Demo Driver", UserRole.DRIVER),
-    "equipment": ("Demo Equipment Manager", UserRole.EQUIPMENT_MANAGER),
 }
 
 
@@ -145,8 +137,10 @@ def seed_demo() -> None:
         raise RuntimeError("DATABASE_URL must be configured before seeding demo data")
     ensure_schema()
     with SessionLocal() as db:
+        if not DEMO_PASSWORD:
+            raise RuntimeError("DEMO_PASSWORD must be configured before seeding demo data")
         users = {key: _user(db, key, name, role) for key, (name, role) in ROLE_USERS.items()}
-        workers = [users["worker"]]
+        workers = [users["engineer"]]
         for index in range(1, 20):
             workers.append(_user(db, f"worker{index:02d}", f"Demo Worker {index:02d}", UserRole.WORKER))
 
@@ -260,19 +254,19 @@ def seed_demo() -> None:
                 severity=SiteDisruptionSeverity.HIGH, start_time=datetime(2026, 9, 16, 14, tzinfo=timezone.utc),
                 end_time=datetime(2026, 9, 16, 15, 30, tzinfo=timezone.utc), duration_minutes=90,
                 zone="Pier P3", description="Demo heavy rainfall at Pier P3",
-                source=SiteDisruptionSource.MANUAL, created_by=users["site"].id,
+                source=SiteDisruptionSource.MANUAL, created_by=users["engineer"].id,
             ))
 
         crew = db.scalar(select(Crew).where(Crew.project_id == project.id, Crew.name == "Demo Civil Crew A"))
         if crew is None:
-            crew = Crew(project_id=project.id, name="Demo Civil Crew A", description="18 assigned, 15 present", foreman_id=users["foreman"].id)
+            crew = Crew(project_id=project.id, name="Demo Civil Crew A", description="18 assigned, 15 present", foreman_id=users["engineer"].id)
             db.add(crew)
             db.flush()
         for worker in workers[:18]:
             if db.scalar(select(CrewMember).where(CrewMember.crew_id == crew.id, CrewMember.user_id == worker.id)) is None:
                 db.add(CrewMember(crew_id=crew.id, user_id=worker.id, role="WORKER"))
             if db.scalar(select(WorkforceAssignment).where(WorkforceAssignment.activity_id == p3.id, WorkforceAssignment.user_id == worker.id)) is None:
-                db.add(WorkforceAssignment(project_id=project.id, activity_id=p3.id, user_id=worker.id, crew_id=crew.id, role="WORKER", assigned_by=users["foreman"].id, status=WorkforceAssignmentStatus.ACTIVE))
+                db.add(WorkforceAssignment(project_id=project.id, activity_id=p3.id, user_id=worker.id, crew_id=crew.id, role="FIELD_ENGINEER", assigned_by=users["engineer"].id, status=WorkforceAssignmentStatus.ACTIVE))
             if db.scalar(select(AttendanceRecord).where(AttendanceRecord.project_id == project.id, AttendanceRecord.user_id == worker.id, AttendanceRecord.attendance_date == DEMO_DATE)) is None:
                 db.add(AttendanceRecord(project_id=project.id, user_id=worker.id, attendance_date=DEMO_DATE, status=AttendanceStatus.PRESENT if worker in workers[:15] else AttendanceStatus.ABSENT, check_in=datetime(2026, 9, 16, 7, 30, tzinfo=timezone.utc) if worker in workers[:15] else None, check_out=datetime(2026, 9, 16, 16, tzinfo=timezone.utc) if worker in workers[:15] else None))
             elif worker in workers[:15]:
@@ -304,7 +298,7 @@ def seed_demo() -> None:
                 db.add(PPEInspection(
                     project_id=project.id, worker_id=worker.id, inspection_date=DEMO_DATE,
                     compliant=index < 15, violation_type=None if index < 15 else "MISSING_HELMET",
-                    inspected_by=users["safety"].id,
+                    inspected_by=users["engineer"].id,
                 ))
 
         for name, unit, current, minimum in (("Reinforcement Steel", "ton", 18, 40), ("Concrete", "m3", 120, 50), ("Formwork Material", "m2", 240, 80)):
@@ -327,7 +321,7 @@ def seed_demo() -> None:
                     severity=EquipmentIssueSeverity.HIGH,
                     description="Excavator is unavailable for scheduled support.",
                     reported_at=datetime(2026, 9, 16, 15, tzinfo=timezone.utc),
-                    reported_by=users["equipment"].id,
+                    reported_by=users["engineer"].id,
                 ))
             if db.scalar(select(EquipmentUsageRecord).where(
                 EquipmentUsageRecord.equipment_id == item.id,
@@ -338,25 +332,25 @@ def seed_demo() -> None:
                     project_id=project.id, equipment_id=item.id, activity_id=p3.id,
                     start_time=datetime(2026, 9, 16, 7, tzinfo=timezone.utc),
                     end_time=datetime(2026, 9, 16, 7 + hours, tzinfo=timezone.utc),
-                    recorded_by=users["equipment"].id,
+                    recorded_by=users["engineer"].id,
                     notes="Development demo usage record for historical utilization validation.",
                 ))
 
         for incident_type, severity, description, hour in ((SafetyIncidentType.NEAR_MISS, SafetyIncidentSeverity.MEDIUM, "Demo near miss: unsecured tool near Pier P3.", 17), (SafetyIncidentType.INCIDENT, SafetyIncidentSeverity.HIGH, "Demo high safety incident: exclusion-zone breach.", 17)):
             if db.scalar(select(SafetyIncident).where(SafetyIncident.project_id == project.id, SafetyIncident.description == description)) is None:
-                db.add(SafetyIncident(project_id=project.id, activity_id=p3.id, reported_by=users["safety"].id, incident_type=incident_type, severity=severity, description=description, zone="Pier P3", occurred_at=datetime(2026, 9, 16, hour, tzinfo=timezone.utc), status=SafetyIncidentStatus.OPEN))
+                db.add(SafetyIncident(project_id=project.id, activity_id=p3.id, reported_by=users["engineer"].id, incident_type=incident_type, severity=severity, description=description, zone="Pier P3", occurred_at=datetime(2026, 9, 16, hour, tzinfo=timezone.utc), status=SafetyIncidentStatus.OPEN))
 
         failed_inspection = None
         for index, status in enumerate((InspectionStatus.PASSED, InspectionStatus.PASSED, InspectionStatus.PASSED, InspectionStatus.FAILED)):
             inspection = db.scalar(select(QualityInspection).where(QualityInspection.project_id == project.id, QualityInspection.notes == f"Demo inspection {index + 1}"))
             if inspection is None:
-                inspection = QualityInspection(project_id=project.id, activity_id=p3.id, inspector_id=users["qa"].id, inspection_type=InspectionType.WORKMANSHIP, status=status, score=92 if status == InspectionStatus.PASSED else 58, notes=f"Demo inspection {index + 1}", inspected_at=datetime(2026, 9, 16, 16, tzinfo=timezone.utc))
+                inspection = QualityInspection(project_id=project.id, activity_id=p3.id, inspector_id=users["engineer"].id, inspection_type=InspectionType.WORKMANSHIP, status=status, score=92 if status == InspectionStatus.PASSED else 58, notes=f"Demo inspection {index + 1}", inspected_at=datetime(2026, 9, 16, 16, tzinfo=timezone.utc))
                 db.add(inspection)
                 db.flush()
             if status == InspectionStatus.FAILED:
                 failed_inspection = inspection
         if failed_inspection and db.scalar(select(QualityDefect).where(QualityDefect.inspection_id == failed_inspection.id)) is None:
-            db.add(QualityDefect(project_id=project.id, activity_id=p3.id, inspection_id=failed_inspection.id, severity=QualitySeverity.HIGH, description="Demo reinforcement cover below tolerance.", location="Pier P3 west face", status=QualityDefectStatus.OPEN, reported_by=users["qa"].id))
+            db.add(QualityDefect(project_id=project.id, activity_id=p3.id, inspection_id=failed_inspection.id, severity=QualitySeverity.HIGH, description="Demo reinforcement cover below tolerance.", location="Pier P3 west face", status=QualityDefectStatus.OPEN, reported_by=users["engineer"].id))
 
         db.flush()
         risk = db.scalar(select(ActivityRiskPrediction).where(ActivityRiskPrediction.activity_id == p3.id, ActivityRiskPrediction.model_version == "demo-1"))
