@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.auth import get_current_user
@@ -362,11 +362,15 @@ def my_activities(
 ):
     query = (
         select(Activity)
-        .join(ActivityAssignment)
         .options(selectinload(Activity.assignments))
         .where(
-            ActivityAssignment.user_id == current_user.id,
-            ActivityAssignment.status == AssignmentStatus.ACTIVE,
+            or_(
+                Activity.responsible_user_id == current_user.id,
+                Activity.assignments.any(
+                    (ActivityAssignment.user_id == current_user.id)
+                    & (ActivityAssignment.status == AssignmentStatus.ACTIVE)
+                ),
+            )
         )
     )
     if status_filter:
