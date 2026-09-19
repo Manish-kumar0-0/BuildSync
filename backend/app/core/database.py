@@ -11,8 +11,20 @@ class Base(DeclarativeBase):
     pass
 
 
+def _engine_kwargs() -> dict[str, object]:
+    if not settings.database_url:
+        return {}
+    if settings.database_url.startswith(("postgresql://", "postgresql+")):
+        return {
+            "connect_args": {"connect_timeout": 10},
+            "pool_timeout": 15,
+            "pool_recycle": 1800,
+        }
+    return {"pool_timeout": 15}
+
+
 engine = (
-    create_engine(settings.database_url, pool_pre_ping=True)
+    create_engine(settings.database_url, pool_pre_ping=True, **_engine_kwargs())
     if settings.database_url
     else None
 )

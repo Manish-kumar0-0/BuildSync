@@ -4,6 +4,7 @@ from app.services.assistant.providers.gemini import (
     GeminiAssistantError,
     GeminiAssistantProvider,
 )
+from app.services.assistant.providers.mock import MockAssistantProvider
 
 
 class AssistantConfigurationError(RuntimeError):
@@ -15,9 +16,11 @@ class AssistantProviderError(RuntimeError):
 
 
 def _provider():
+    if settings.ai_provider == "mock":
+        return MockAssistantProvider()
     if settings.ai_provider != "gemini":
         raise AssistantConfigurationError(
-            "Project Assistant requires AI_PROVIDER=gemini"
+            f"Unsupported AI_PROVIDER: {settings.ai_provider}"
         )
     try:
         return GeminiAssistantProvider()

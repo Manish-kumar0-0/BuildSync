@@ -2,7 +2,7 @@ import os
 from decimal import Decimal
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 load_dotenv()
 
@@ -12,7 +12,7 @@ class Settings(BaseModel):
     api_version: str = Field(default="1.0.0")
     environment: str = Field(default="development")
     database_url: str | None = Field(default=None)
-    jwt_secret_key: str = Field(default="development-only-change-me")
+    jwt_secret_key: str = Field(default="development-only-change-me-32-byte-key")
     jwt_algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=60)
     evidence_max_file_size_bytes: int = Field(default=10 * 1024 * 1024, gt=0)
@@ -50,6 +50,12 @@ class Settings(BaseModel):
     smtp_from_email: str | None = None
     smtp_use_tls: bool = True
     password_reset_expire_minutes: int = 10
+
+    @model_validator(mode="after")
+    def validate_jwt_secret(self) -> "Settings":
+        if self.environment != "development" and len(self.jwt_secret_key.encode()) < 32:
+            raise ValueError("JWT_SECRET_KEY must be at least 32 bytes outside development")
+        return self
 
     @classmethod
     def from_environment(cls) -> "Settings":

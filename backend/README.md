@@ -62,9 +62,11 @@ C:/Python314/python.exe -c "from sqlalchemy import text; from app.core.database 
 ```
 
 For a fresh Supabase database, `scripts/init_db.py` imports all SQLAlchemy
-models and creates the complete schema. This project does not use Alembic;
-`ensure_schema()` performs only additive compatibility updates and preserves
-existing rows.
+models and creates the complete schema. Run it before starting the API. This
+project does not use Alembic; `ensure_schema()` performs only additive
+compatibility updates and preserves existing rows. The API does not run schema
+migrations during module import, so a slow or unavailable database cannot block
+the web server from starting.
 
 Seed development-only users for each supported role:
 

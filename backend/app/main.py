@@ -25,11 +25,6 @@ from app.routes.admin import router as admin_router
 from app.routes.analytics import router as analytics_router
 from app.routes.execution_intelligence import router as execution_intelligence_router
 from app.routes.activity_measured_progress import router as activity_measured_progress_router
-from app.core.database import ensure_schema
-
-ensure_schema()
-
-
 app = FastAPI(
     title="BuildSync Backend",
     version=settings.api_version,
