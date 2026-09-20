@@ -68,6 +68,37 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "BuildSync Backend"}
 
 
+@app.get("/api/health/vision", tags=["health"])
+def vision_health_check() -> dict[str, object]:
+    checks: dict[str, object] = {}
+    try:
+        import cv2
+
+        checks["opencv"] = {"status": "ok", "version": cv2.__version__}
+    except Exception as exc:
+        checks["opencv"] = {"status": "error", "error": type(exc).__name__}
+    try:
+        from app.services.vision.yolo_service import model_metadata
+
+        metadata = model_metadata()
+        checks["yolo"] = {
+            "status": "ok",
+            "model": metadata.filename,
+            "classes": len(metadata.available_classes),
+        }
+    except Exception as exc:
+        checks["yolo"] = {"status": "error", "error": type(exc).__name__}
+    checks["gemini"] = {
+        "status": "ok" if settings.gemini_api_key else "not_configured",
+        "model": settings.gemini_vision_model or settings.gemini_model,
+    }
+    overall = "ok" if all(
+        check.get("status") == "ok"
+        for check in checks.values()
+    ) else "degraded"
+    return {"status": overall, "checks": checks}
+
+
 @app.get("/health", tags=["health"])
 def root_health_check() -> dict[str, str]:
     return {"status": "ok"}

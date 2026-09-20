@@ -12,7 +12,8 @@ FROM node:22-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     FRONTEND_PORT=3000 \
-    BACKEND_PORT=8000
+    BACKEND_PORT=8000 \
+    YOLO_MODEL_PATH=/app/backend/models/yolo11n.pt
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 python3-pip nginx supervisor gettext-base \
