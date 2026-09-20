@@ -80,7 +80,10 @@ users are updated with the configured password, while missing users are created.
 
 For Gemini, use a valid model available to the Gemini API, such as
 `gemini-2.5-flash`, for both `GEMINI_MODEL` and `GEMINI_VISION_MODEL`. The API key
-must be supplied through `GEMINI_API_KEY`; never commit it.
+must be supplied through `GEMINI_API_KEY`; never commit it. If Gemini is
+temporarily unavailable, the Project Assistant returns a deterministic answer
+from the authorized database context instead of fabricating an answer or
+failing with a generic provider message.
 
 ## Run
 

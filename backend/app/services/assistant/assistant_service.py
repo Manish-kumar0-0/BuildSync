@@ -1,10 +1,17 @@
+import logging
+
 from app.core.config import settings
 from app.schemas.assistant import AssistantContext, AssistantProviderResult
 from app.services.assistant.providers.gemini import (
     GeminiAssistantError,
     GeminiAssistantProvider,
 )
-from app.services.assistant.providers.mock import MockAssistantProvider
+from app.services.assistant.providers.mock import (
+    ContextAssistantProvider,
+    MockAssistantProvider,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class AssistantConfigurationError(RuntimeError):
@@ -36,7 +43,12 @@ def generate_project_answer(
     except AssistantConfigurationError:
         raise
     except GeminiAssistantError as exc:
-        raise AssistantProviderError(str(exc)) from exc
+        logger.warning(
+            "Gemini assistant unavailable; using database-grounded fallback "
+            "exception_type=%s",
+            type(exc).__name__,
+        )
+        result = ContextAssistantProvider().generate_answer(question, context)
     valid_ids = {source.id for source in context.sources}
     if context.sources and not result.source_ids:
         raise AssistantProviderError("Assistant returned no source references")

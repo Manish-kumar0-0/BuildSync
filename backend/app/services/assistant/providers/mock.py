@@ -2,8 +2,8 @@ from app.schemas.assistant import AssistantContext, AssistantProviderResult
 from app.services.assistant.providers.base import AssistantProvider
 
 
-class MockAssistantProvider(AssistantProvider):
-    """Deterministic, database-grounded assistant for local development."""
+class ContextAssistantProvider(AssistantProvider):
+    """Deterministic assistant that answers only from retrieved project records."""
 
     def generate_answer(
         self, question: str, context: AssistantContext
@@ -54,3 +54,6 @@ class MockAssistantProvider(AssistantProvider):
             source_ids=source_ids,
             confidence="SUPPORTED" if records else "INSUFFICIENT_DATA",
         )
+
+
+MockAssistantProvider = ContextAssistantProvider

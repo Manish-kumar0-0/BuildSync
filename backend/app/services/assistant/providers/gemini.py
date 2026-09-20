@@ -1,10 +1,13 @@
 import json
+import logging
 
 from pydantic import ValidationError
 
 from app.core.config import settings
 from app.schemas.assistant import AssistantContext, AssistantProviderResult
 from app.services.assistant.providers.base import AssistantProvider
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiAssistantError(RuntimeError):
@@ -64,6 +67,36 @@ class GeminiAssistantProvider(AssistantProvider):
         except GeminiAssistantError:
             raise
         except (json.JSONDecodeError, ValidationError) as exc:
+            logger.error(
+                "Gemini assistant diagnostic category=INVALID_RESPONSE "
+                "exception_type=%s",
+                type(exc).__name__,
+            )
             raise GeminiAssistantError("Gemini returned an invalid answer") from exc
         except Exception as exc:
-            raise GeminiAssistantError("Gemini assistant request failed") from exc
+            status = _safe_status(exc)
+            logger.error(
+                "Gemini assistant diagnostic category=PROVIDER_EXCEPTION "
+                "exception_type=%s status=%s",
+                type(exc).__name__,
+                status,
+            )
+            raise GeminiAssistantError(
+                _provider_failure_message(exc, status)
+            ) from exc
+
+
+def _safe_status(exc: Exception) -> int | str:
+    status = getattr(exc, "status_code", None)
+    if status is None:
+        status = getattr(exc, "code", None)
+    return status if isinstance(status, (int, str)) else "unavailable"
+
+
+def _provider_failure_message(exc: Exception, status: int | str) -> str:
+    exception_name = type(exc).__name__.lower()
+    if "timeout" in exception_name or "timeout" in str(exc).lower():
+        return "Gemini request timed out; increase GEMINI_REQUEST_TIMEOUT_MS or check provider availability"
+    if status != "unavailable":
+        return f"Gemini request was rejected (provider status {status})"
+    return "Gemini request failed before a provider response"
