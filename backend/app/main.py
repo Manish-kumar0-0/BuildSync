@@ -88,13 +88,21 @@ def vision_health_check() -> dict[str, object]:
         }
     except Exception as exc:
         checks["yolo"] = {"status": "error", "error": type(exc).__name__}
+    try:
+        __import__("google.genai")
+        gemini_sdk_status = "ok"
+    except Exception as exc:
+        gemini_sdk_status = f"error:{type(exc).__name__}"
     checks["gemini"] = {
-        "status": "ok" if settings.gemini_api_key else "not_configured",
+        "status": gemini_sdk_status
+        if gemini_sdk_status != "ok"
+        else ("configured" if settings.gemini_api_key else "not_configured"),
         "model": settings.gemini_vision_model or settings.gemini_model,
     }
-    overall = "ok" if all(
-        check.get("status") == "ok"
-        for check in checks.values()
+    overall = "ok" if (
+        checks["opencv"].get("status") == "ok"
+        and checks["yolo"].get("status") == "ok"
+        and checks["gemini"].get("status") == "configured"
     ) else "degraded"
     return {"status": overall, "checks": checks}
 
