@@ -2,10 +2,21 @@ import { api, type AssistantResult } from "./api";
 
 export const aiService = {
   async ask(projectId: string, message: string): Promise<AssistantResult> {
-    const request = api.post<AssistantResult>(`/api/projects/${projectId}/assistant/query`, { question: message });
+    const request = api.post<AssistantResult>(
+      `/api/projects/${projectId}/assistant/query`,
+      { question: message },
+    );
+    let timeoutId: number | undefined;
     const timeout = new Promise<never>((_, reject) => {
-      window.setTimeout(() => reject(new Error("Project assistant request timed out")), 8000);
+      timeoutId = window.setTimeout(
+        () => reject(new Error("Project assistant timed out while waiting for the backend")),
+        30_000,
+      );
     });
-    return Promise.race([request, timeout]);
+    try {
+      return await Promise.race([request, timeout]);
+    } finally {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    }
   },
 };

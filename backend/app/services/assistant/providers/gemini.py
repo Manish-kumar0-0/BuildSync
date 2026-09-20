@@ -22,7 +22,12 @@ class GeminiAssistantProvider(AssistantProvider):
             raise GeminiAssistantError("Gemini provider is not installed") from exc
         self._types = genai.types
         try:
-            self._client = genai.Client(api_key=key)
+            self._client = genai.Client(
+                api_key=key,
+                http_options=genai.types.HttpOptions(
+                    timeout=settings.gemini_request_timeout_ms,
+                ),
+            )
         except Exception as exc:
             raise GeminiAssistantError("Gemini provider could not be initialized") from exc
 

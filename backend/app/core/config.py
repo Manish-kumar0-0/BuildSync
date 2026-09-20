@@ -21,6 +21,7 @@ class Settings(BaseModel):
     gemini_api_key: str | None = Field(default=None)
     gemini_model: str = Field(default="gemini-2.5-flash")
     gemini_vision_model: str | None = Field(default="gemini-2.5-flash")
+    gemini_request_timeout_ms: int = Field(default=25_000, gt=0)
     yolo_model_path: str | None = Field(default=None)
     yolo_classes: list[str] = Field(default_factory=list)
     weather_provider: str | None = Field(default=None)
@@ -109,6 +110,9 @@ class Settings(BaseModel):
             gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
             gemini_vision_model=os.getenv(
                 "GEMINI_VISION_MODEL", "gemini-2.5-flash"
+            ),
+            gemini_request_timeout_ms=int(
+                os.getenv("GEMINI_REQUEST_TIMEOUT_MS", "25000")
             ),
             yolo_model_path=os.getenv("YOLO_MODEL_PATH") or None,
             yolo_classes=[
