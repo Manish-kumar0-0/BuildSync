@@ -405,6 +405,7 @@ function WorkspaceSummary() {
 }
 
 function Welcome({ onLogin, onDemo }: { onLogin: () => void; onDemo: () => void }) {
+  const [tutorialOpen, setTutorialOpen] = useState(true);
   const capabilities = [
     ["Field Evidence", "Capture & verify", Camera],
     ["Live Progress", "Plan vs actual", Activity],
@@ -427,6 +428,47 @@ function Welcome({ onLogin, onDemo }: { onLogin: () => void; onDemo: () => void 
         <Button size="lg" className="h-13 w-full bg-[#0D3BFF] text-white hover:bg-[#0835E6]" onClick={onLogin}>Sign in →</Button>
         <Button size="lg" variant="outline" className="h-13 w-full border-border bg-white text-muted-foreground hover:border-primary/40 hover:bg-white hover:text-foreground" onClick={onDemo}>View demo workspace</Button>
       </div>
+
+      <section className="mt-8 w-full rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 text-left sm:mt-10 sm:p-5" aria-labelledby="how-buildsync-works">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left"
+          onClick={() => setTutorialOpen(current => !current)}
+          aria-expanded={tutorialOpen}
+          aria-controls="buildsync-tutorial"
+        >
+          <span>
+            <span id="how-buildsync-works" className="block text-base font-extrabold">How BuildSync works</span>
+            <span className="mt-1 block text-xs text-muted-foreground">काम कैसे दर्ज करें · Simple steps for site workers</span>
+          </span>
+          {tutorialOpen ? <ChevronDown className="h-5 w-5 shrink-0 text-primary" /> : <ChevronRight className="h-5 w-5 shrink-0 text-primary" />}
+        </button>
+        {tutorialOpen && <div id="buildsync-tutorial" className="mt-5 space-y-4">
+          {[
+            [1, "Open your work", "अपना काम खोलें", "Tap Activities and choose the work given to you.", ListChecks],
+            [2, "Take two clear photos", "दो साफ़ फोटो लें", "Take one photo before work and one photo after work.", Camera],
+            [3, "Enter progress", "काम कितना हुआ लिखें", "Enter the progress number, for example 40 or 63.", Gauge],
+            [4, "Send the update", "अपडेट भेजें", "Tap Submit. The photo and time are saved for your team.", Upload],
+            [5, "Team checks it", "टीम जाँच करती है", "Your manager can review the evidence and track project progress.", CheckCircle2],
+          ].map(([number, title, hindi, detail, Icon]) => {
+            const StepIcon = Icon as ComponentType<{ className?: string }>;
+            return <div key={number as number} className="flex items-start gap-3">
+              <div className="relative grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-extrabold text-white">
+                <StepIcon className="h-4 w-4" />
+                <span className="absolute -right-1 -top-2 grid h-4 w-4 place-items-center rounded-full bg-foreground text-[9px] text-background">{number}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-extrabold">{title}</p>
+                <p className="text-[11px] font-semibold text-primary">{hindi}</p>
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{detail}</p>
+              </div>
+            </div>;
+          })}
+          <p className="rounded-xl bg-white px-3 py-2.5 text-center text-xs font-semibold text-muted-foreground">
+            No internet? Save the update and sync when the network returns.
+          </p>
+        </div>}
+      </section>
 
       <div className="mt-12 w-full border-t border-border pt-7 text-left sm:mt-16">
         <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">

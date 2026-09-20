@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.auth import get_current_user
 from app.core.database import get_db
-from app.models import Project, User, UserRole
+from app.models import (
+    Project,
+    ProjectAssignmentStatus,
+    ProjectUserAssignment,
+    User,
+    UserRole,
+)
 from app.models.evidence import Evidence, EvidenceStatus
 from app.models.field_activity import Activity, ActivityAssignment, AssignmentStatus, FieldActivityStatus
 from app.models.progress_assessment import ProgressAssessment
@@ -44,6 +50,14 @@ def _can_view_project(db: Session, project_id: int, user: User) -> bool:
         return True
     if user.role not in {UserRole.SITE_ENGINEER, UserRole.FIELD_ENGINEER}:
         return False
+    if db.scalar(
+        select(ProjectUserAssignment.id).where(
+            ProjectUserAssignment.project_id == project_id,
+            ProjectUserAssignment.user_id == user.id,
+            ProjectUserAssignment.status == ProjectAssignmentStatus.ACTIVE,
+        )
+    ) is not None:
+        return True
     return db.scalar(
         select(ActivityAssignment.id)
         .join(Activity, Activity.id == ActivityAssignment.activity_id)
