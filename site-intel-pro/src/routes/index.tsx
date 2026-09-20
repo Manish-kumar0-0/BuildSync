@@ -852,7 +852,9 @@ function CaptureFlow({ onBack }: { onBack: () => void }) {
           setComparison(await compareWithPrevious(uploaded.id));
         } catch (error) {
           const apiError = error instanceof ApiError ? error : undefined;
-          setUploadError(apiError?.message ?? "Evidence was uploaded, but comparison could not be completed.");
+          if (apiError?.status !== 404) {
+            setUploadError(apiError?.message ?? "Evidence was uploaded, but comparison could not be completed.");
+          }
         }
       }
       setSubmitted(true);

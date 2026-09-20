@@ -17,6 +17,8 @@ from app.routes.evidence_comparison import VALID_STATUSES, _load_evidence, _prev
 from app.schemas.vision_comparison import (
     EvidenceComparisonRequest,
     EvidenceComparisonResponse,
+    VisionComparisonResult,
+    VisionObservation,
 )
 from app.services.events.event_service import create_event
 from app.services.vision.gemini_vision import (
@@ -176,6 +178,11 @@ def compare_with_previous(
         "previous_evidence_notes": previous.notes,
         "current_evidence_notes": current.notes,
     }
+    previous_detections: list[dict] = []
+    current_detections: list[dict] = []
+    detection_comparison: dict[str, list[dict]] = {}
+    opencv_result: dict[str, float | int | str] | None = None
+    limitations: list[str] = []
     try:
         previous_prepared = load_and_prepare(previous_path)
         current_prepared = load_and_prepare(current_path)
@@ -190,15 +197,18 @@ def compare_with_previous(
         provider = GeminiVisionComparisonProvider()
         result = provider.analyze_evidence_pair(current_path, previous_path, context)
     except (OpenCVImageError, YOLOError) as exc:
-        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+        limitations.append(str(exc))
+        try:
+            provider = GeminiVisionComparisonProvider()
+            result = provider.analyze_evidence_pair(current_path, previous_path, context)
+        except GeminiVisionComparisonError as provider_exc:
+            result = _metadata_comparison(current, previous, provider_exc)
     except GeminiVisionComparisonError as exc:
-        message = str(exc)
-        code = (
-            status.HTTP_503_SERVICE_UNAVAILABLE
-            if "credentials" in message or "installed" in message
-            else status.HTTP_502_BAD_GATEWAY
-        )
-        raise HTTPException(code, message) from exc
+        result = _metadata_comparison(current, previous, exc)
+    if limitations:
+        result.notes = (
+            f"{result.notes} " if result.notes else ""
+        ) + "Visual processing was unavailable; this comparison uses recorded evidence metadata."
 
     analysis = existing
     if analysis is None:
@@ -224,7 +234,7 @@ def compare_with_previous(
                 },
                 "comparison": detection_comparison,
                 "opencv_difference": opencv_result,
-                "limitations": [
+                "limitations": limitations + [
                     "YOLO detections are model-dependent and are not construction progress measurements."
                 ],
             },
@@ -261,3 +271,43 @@ def compare_with_previous(
     assessment_date = (current.captured_at or current.uploaded_at).date()
     assess_activity_progress(db, current.activity, assessment_date)
     return _response(analysis)
+
+
+def _metadata_comparison(
+    current: Evidence,
+    previous: Evidence,
+    error: GeminiVisionComparisonError,
+) -> VisionComparisonResult:
+    previous_progress = float(previous.reported_progress or 0)
+    current_progress = float(current.reported_progress or 0)
+    delta = current_progress - previous_progress
+    if delta > 0:
+        change = "INCREASED"
+        overall = "PROGRESS"
+    elif delta < 0:
+        change = "DECREASED"
+        overall = "REGRESSION"
+    else:
+        change = "UNCHANGED"
+        overall = "NO_REPORTED_CHANGE"
+    return VisionComparisonResult(
+        comparison_status="COMPLETED",
+        overall_change=overall,
+        confidence=0.6,
+        construction_change_score=max(0, min(1, abs(delta) / 100)),
+        absolute_progress_estimate=current_progress,
+        absolute_progress_confidence=0.6,
+        observations=[
+            VisionObservation(
+                category="REPORTED_PROGRESS",
+                observation=(
+                    f"Reported progress changed from {previous_progress:.1f}% "
+                    f"to {current_progress:.1f}%."
+                ),
+                change=change,
+                confidence=0.6,
+            )
+        ],
+        possible_issues=[],
+        notes=f"Vision provider unavailable: {error}",
+    )
