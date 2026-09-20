@@ -80,7 +80,7 @@ def project_assistant(
     except AssistantProviderError as exc:
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY,
-            "Project Assistant provider could not complete the request",
+            f"Project Assistant provider could not complete the request: {exc}",
         ) from exc
     source_ids = set(result.source_ids)
     return AssistantResponse(
