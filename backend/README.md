@@ -85,6 +85,12 @@ temporarily unavailable, the Project Assistant returns a deterministic answer
 from the authorized database context instead of fabricating an answer or
 failing with a generic provider message.
 
+The assistant accepts general construction-operations questions covering
+schedule, progress, delays, risks, safety, quality, materials, equipment,
+workforce, weather disruptions, evidence, inspections, and recovery planning.
+It reports when the selected project does not contain enough information rather
+than guessing.
+
 ## Run
 
 ```powershell
