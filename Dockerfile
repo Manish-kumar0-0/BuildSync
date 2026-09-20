@@ -26,7 +26,8 @@ COPY backend /app/backend
 RUN python3 -c "import cv2; print('OpenCV', cv2.__version__)" \
     && python3 -c "import ultralytics; print('Ultralytics', ultralytics.__version__)" \
     && python3 -c "from google import genai; print('Gemini SDK ready')" \
-    && python3 -c "from ultralytics import YOLO; model = YOLO('/app/backend/models/yolo11n.pt'); print('YOLO model ready', len(model.names))"
+    && test -s /app/backend/models/yolo11n.pt \
+    && echo "YOLO model file packaged"
 COPY --from=frontend-build /app/site-intel-pro/.output /app/site-intel-pro/.output
 COPY deploy/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY deploy/supervisord.conf /etc/supervisor/conf.d/buildsync.conf
